@@ -259,14 +259,17 @@ iHat t c e =
 -- set, it performs the update for each training example.
 --
 -- It uses reverse mode automatic differentiation to compute the gradient
--- The learning rate is constant through out, and is set to 0.001
+-- The learning rate 𝜂 is constant throughout; if 0 then 0.001 is used.
 stochasticGradientDescent :: (Traversable f, Fractional a, Ord a)
-  => (forall s. Reifies s Tape => e -> f (Reverse s a) -> Reverse s a)
+  => a
+  -> (forall s. Reifies s Tape => e -> f (Reverse s a) -> Reverse s a)
   -> [e]
   -> f a
   -> [f a]
-stochasticGradientDescent errorSingle d0 x0 = go xgx0 0.001 dLeft
+stochasticGradientDescent eta errorSingle d0 x0 = go xgx0 eta0 dLeft
   where
+    eta0 = if eta == 0 then defaultEta else eta
+    defaultEta = 0.001
     dLeft = tail $ cycle d0
     xgx0 = Reverse.gradWith (,) (errorSingle (head d0)) x0
     go xgx !eta d
